@@ -14,7 +14,7 @@ class Todo extends StatefulWidget {
 }
 
 class _TodoState extends State<Todo> {
-  TextEditingController _taskController = TextEditingController();
+  TextEditingController taskController = TextEditingController();
   final _myTaskBox = Hive.box('myTasksBox');
   TaskStorage db = TaskStorage();
 
@@ -46,16 +46,16 @@ class _TodoState extends State<Todo> {
   }
 
   void save() {
-    if (_taskController.text.isEmpty) return;
+    if (taskController.text.isNotEmpty) {
+      setState(() {
+        db.tasks.add([taskController.text, false]);
+        taskController.clear();
+      });
 
-    setState(() {
-      db.tasks.add([_taskController.text, false]);
-      _taskController.clear();
-    });
+      db.updateData();
 
-    db.updateData();
-
-    Navigator.of(context).pop();
+      Navigator.of(context).pop();
+    }
   }
 
   void cancel() {
@@ -67,7 +67,7 @@ class _TodoState extends State<Todo> {
       context: context,
       builder: (context) {
         return InputDialog(
-          controller: _taskController,
+          controller: taskController,
           onSave: save,
           onCancel: cancel,
         );

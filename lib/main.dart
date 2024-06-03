@@ -8,11 +8,11 @@ void main() async {
   await Hive.initFlutter();
   await Hive.openBox('myTasksBox');
 
-  runApp(const MyApp());
+  runApp(const TodoApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class TodoApp extends StatelessWidget {
+  const TodoApp({super.key});
 
   @override
   Widget build(BuildContext context) {
