@@ -9,6 +9,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
   Route::prefix('projects')->name('projects.')->group(function () {
 
     Route::post(
+      '/',
+      [ProjectController::class, 'index']
+    )->name('index');
+
+    Route::post(
+      's/{project:uuid}',
+      [ProjectController::class, 'show']
+    )->name('show');
+
+    Route::post(
       'a/members/{project:uuid}',
       [ProjectController::class, 'addMember']
     )->name('members.add');

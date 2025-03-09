@@ -11,10 +11,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Tags\HasTags;
 
 class Project extends Model implements HasMedia
 {
-  use HasFactory, SoftDeletes, InteractsWithMedia, HasBootUuid;
+  use HasFactory, SoftDeletes, InteractsWithMedia, HasBootUuid, HasTags;
 
   protected $fillable = [
     'name',
@@ -43,6 +44,11 @@ class Project extends Model implements HasMedia
   public function tasks(): HasMany
   {
     return $this->hasMany(Task::class);
+  }
+
+  public function notes()
+  {
+    return $this->morphMany(Note::class, 'notable');
   }
 
   // Helper methods

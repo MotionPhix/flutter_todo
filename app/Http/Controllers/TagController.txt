@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Note;
+use App\Models\Project;
+use App\Models\Task;
+use Inertia\Inertia;
+use Spatie\Tags\Tag;
+
+class TagControllerTxt extends Controller
+{
+  public function show(string $slug)
+  {
+    $tag = Tag::findFromSlug($slug);
+
+    $tasks = Task::withAnyTags([$tag->name])->with(['project', 'user'])->get();
+    $projects = Project::withAnyTags([$tag->name])->with(['owner'])->get();
+    $notes = Note::withAnyTags([$tag->name])->with(['user'])->get();
+
+    $items = collect()
+      ->concat($tasks->map(fn ($task) => [
+        'id' => $task->id,
+        'type' => 'Task',
+        'title' => $task->title,
+        'description' => $task->description,
+        'created_at' => $task->created_at,
+        'user' => $task->user,
+        'route' => route('tasks.show', $task->id)
+      ]))
+      ->concat($projects->map(fn ($project) => [
+        'id' => $project->id,
+        'type' => 'Project',
+        'title' => $project->name,
+        'description' => $project->description,
+        'created_at' => $project->created_at,
+        'user' => $project->owner,
+        'route' => route('projects.show', $project->id)
+      ]))
+      ->concat($notes->map(fn ($note) => [
+        'id' => $note->id,
+        'type' => 'Note',
+        'title' => $note->title,
+        'description' => $note->content,
+        'created_at' => $note->created_at,
+        'user' => $note->user,
+        'route' => route('notes.show', $note->id)
+      ]))
+      ->sortByDesc('created_at')
+      ->values();
+
+    return Inertia::render('Tags/Show', [
+      'tag' => $tag,
+      'items' => $items
+    ]);
+  }
+}

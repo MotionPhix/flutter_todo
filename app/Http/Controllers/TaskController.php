@@ -51,7 +51,7 @@ class TaskController extends Controller
       'due_date' => 'nullable|date',
     ]);
 
-    $task = $project->tasks()->create([
+    $project->tasks()->create([
       ...$validated,
       'created_by' => $request->user()->id,
     ]);

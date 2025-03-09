@@ -10,10 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Tags\HasTags;
 
 class Task extends Model implements HasMedia
 {
-  use HasFactory, SoftDeletes, InteractsWithMedia, HasBootUuid;
+  use HasFactory, SoftDeletes, InteractsWithMedia, HasBootUuid, HasTags;
 
   protected $fillable = [
     'title',
@@ -51,6 +52,11 @@ class Task extends Model implements HasMedia
   public function comments(): HasMany
   {
     return $this->hasMany(TaskComment::class);
+  }
+
+  public function notes()
+  {
+    return $this->morphMany(Note::class, 'notable');
   }
 
   // Helper methods

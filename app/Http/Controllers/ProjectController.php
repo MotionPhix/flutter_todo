@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -10,6 +11,8 @@ use Inertia\Response;
 
 class ProjectController extends Controller
 {
+  use AuthorizesRequests;
+
   public function index(): Response
   {
     $projects = Project::query()
@@ -65,6 +68,8 @@ class ProjectController extends Controller
 
   public function update(Request $request, Project $project): RedirectResponse
   {
+    $this->authorize('update', $project);
+
     $validated = $request->validate([
       'name' => 'required|string|max:255',
       'description' => 'nullable|string',

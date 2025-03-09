@@ -9,6 +9,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
   Route::prefix('tasks')->name('tasks.')->group(function () {
 
     Route::post(
+      '/',
+      [TaskController::class, 'index']
+    )->name('index');
+
+    Route::post(
       'projects/{project:uuid}',
       [TaskController::class, 'store']
     )->name('project.store');
