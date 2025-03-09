@@ -25,6 +25,7 @@ class Task extends Model implements HasMedia
     'assigned_to',
     'created_by',
     'due_date',
+    'list_id',
   ];
 
   protected $casts = [
@@ -37,6 +38,11 @@ class Task extends Model implements HasMedia
   public function project(): BelongsTo
   {
     return $this->belongsTo(Project::class);
+  }
+
+  public function list(): BelongsTo
+  {
+    return $this->belongsTo(TaskList::class, 'list_id');
   }
 
   public function assignee(): BelongsTo

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\TagType;
+use App\Models\Tag;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Spatie\Tags\Tag;
 
 class TagController extends Controller
 {
@@ -106,5 +106,40 @@ class TagController extends Controller
     return Inertia::render('Tags/Cloud', [
       'tags' => $tags
     ]);
+  }
+
+  public function update(Request $request, Tag $tag)
+  {
+    $validated = $request->validate([
+      'name' => 'required|string|max:255',
+      'type' => 'required|string|in:' . implode(',', array_column(TagType::cases(), 'value')),
+      'color' => 'required|string|size:7|starts_with:#',
+    ]);
+
+    $tag->name = $validated['name'];
+    $tag->type = $validated['type'];
+    $tag->color = $validated['color'];
+    $tag->save();
+
+    return back()->with('success', 'Label updated successfully.');
+  }
+
+  public function destroy(Tag $tag)
+  {
+    $tag->delete();
+
+    return back()->with('success', 'Label deleted successfully.');
+  }
+
+  public function bulkDelete(Request $request)
+  {
+    $validated = $request->validate([
+      'ids' => 'required|array',
+      'ids.*' => 'required|integer|exists:tags,id',
+    ]);
+
+    Tag::whereIn('id', $validated['ids'])->delete();
+
+    return back()->with('success', 'Selected labels deleted successfully.');
   }
 }

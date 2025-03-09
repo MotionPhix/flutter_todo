@@ -13,6 +13,7 @@ Route::get('dashboard', function () {
 
 require __DIR__.'/projects.php';
 require __DIR__.'/tags.php';
+require __DIR__.'/lists.php';
 require __DIR__.'/tasks.php';
 require __DIR__.'/notes.php';
 require __DIR__.'/settings.php';

@@ -3,9 +3,12 @@ import '../css/app.css';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
-import { createApp, h } from 'vue';
+import { createApp } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
+import { renderApp, ModalLink } from '@inertiaui/modal-vue'
+import {setupCalendar, Calendar as VCalendar, DatePicker} from 'v-calendar';
+import 'v-calendar/style.css';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -26,9 +29,14 @@ createInertiaApp({
   title: (title) => `${title} - ${appName}`,
   resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
   setup({ el, App, props, plugin }) {
-    createApp({ render: () => h(App, props) })
+    // createApp({ render: () => h(App, props) })
+    createApp({ render: renderApp(App, props) })
       .use(plugin)
       .use(ZiggyVue)
+      .use(setupCalendar, {})
+      .component('ModalLink', ModalLink)
+      .component('VCalendar', VCalendar)
+      .component('VDatePicker', DatePicker)
       .mount(el);
   },
   progress: {
