@@ -1,4 +1,5 @@
 import '../css/app.css';
+import 'v-calendar/style.css';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
@@ -6,14 +7,15 @@ import type { DefineComponent } from 'vue';
 import { createApp } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
-import { renderApp, ModalLink } from '@inertiaui/modal-vue'
-import {setupCalendar, Calendar as VCalendar, DatePicker} from 'v-calendar';
-import 'v-calendar/style.css';
+import { renderApp, ModalLink } from '@inertiaui/modal-vue';
+import { setupCalendar, Calendar as VCalendar, DatePicker } from 'v-calendar';
+import { createPinia } from 'pinia';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
   interface ImportMetaEnv {
     readonly VITE_APP_NAME: string;
+
     [key: string]: string | boolean | undefined;
   }
 
@@ -24,6 +26,7 @@ declare module 'vite/client' {
 }
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const pinia = createPinia();
 
 createInertiaApp({
   title: (title) => `${title} - ${appName}`,
@@ -33,6 +36,7 @@ createInertiaApp({
     createApp({ render: renderApp(App, props) })
       .use(plugin)
       .use(ZiggyVue)
+      .use(pinia)
       .use(setupCalendar, {})
       .component('ModalLink', ModalLink)
       .component('VCalendar', VCalendar)
@@ -40,8 +44,8 @@ createInertiaApp({
       .mount(el);
   },
   progress: {
-    color: '#4B5563',
-  },
+    color: '#4B5563'
+  }
 });
 
 // This will set light / dark mode on page load...

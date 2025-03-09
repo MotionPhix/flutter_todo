@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -20,6 +20,7 @@ import {
   Settings,
   Star,
   SunMedium,
+  GripVertical,
   Plus,
   Trash2,
   User,
@@ -30,12 +31,12 @@ import {
 import ScrollArea from '@/components/ScrollArea.vue';
 import GlobalSearch from '@/components/GlobalSearch.vue';
 import SortableList from '@/components/SortableList.vue';
-import SortableItem from '@/components/SortableItem.vue';
 
 const page = usePage();
 const user = page.props.auth.user;
 const isListsExpanded = ref(true);
 const isLabelsExpanded = ref(true);
+const isDragging = ref(false)
 
 const form = useForm({});
 
@@ -53,7 +54,26 @@ const lists = computed(() => page.props.lists as Array<{
   id: number
   name: string
   tasks_count: number
+  // is_favorite: boolean
 }>);
+
+const favorites = computed(() =>
+  lists.value.filter(list => list.is_favorite)
+)
+
+const regularLists = computed(() =>
+  lists.value.filter(list => !list.is_favorite)
+)
+
+const handleListMove = (evt) => {
+  // Prevent dragging between favorite and regular lists if needed
+  /*if (evt.draggedContext.element.is_favorite !== evt.relatedContext.element?.is_favorite) {
+    return false
+  }*/
+
+  return true
+}
+
 
 // Labels section
 const labels = computed(() => page.props.labels as Array<{
@@ -65,10 +85,32 @@ const labels = computed(() => page.props.labels as Array<{
 }>);
 
 const handleListReorder = (reorderedLists) => {
-  form.patch(route('lists.reorder'), {
+  lists.value = reorderedLists
+
+  // Call your API to update the order
+  form.post(route('lists.reorder'), {
     lists: reorderedLists.map(list => list.id)
-  });
-};
+  })
+}
+
+const editList = (list: any) => {
+  // Navigate to edit modal
+  router.get(route('lists.edit', list.id))
+}
+
+const toggleFavorite = async (list: any) => {
+  await form.put(route('lists.toggle-favorite', list.id), {
+    preserveScroll: true
+  })
+}
+
+const deleteList = async (list: any) => {
+  if (confirm('Are you sure you want to delete this list?')) {
+    await form.delete(route('lists.destroy', list.id), {
+      preserveScroll: true
+    })
+  }
+}
 </script>
 
 <template>
@@ -146,7 +188,7 @@ const handleListReorder = (reorderedLists) => {
           <!--          </div>-->
 
           <!-- Lists Section -->
-          <div class="space-y-2">
+          <section>
             <div class="px-3">
               <div class="flex items-center justify-between">
                 <button
@@ -159,10 +201,11 @@ const handleListReorder = (reorderedLists) => {
                   Lists
                 </button>
 
+                <!-- ... -->
                 <ModalLink
                   as="Button"
-                  variant="ghost" size="icon" class="h-6 w-6"
-                  :href="route('lists.create')">
+                  :href="route('lists.create')"
+                  variant="ghost" size="icon" class="h-6 w-6">
                   <Plus class="w-4 h-4" />
                 </ModalLink>
               </div>
@@ -170,40 +213,77 @@ const handleListReorder = (reorderedLists) => {
 
             <div v-show="isListsExpanded" class="space-y-1">
               <SortableList
-                :items="lists"
-                @reorder="handleListReorder">
-                <SortableItem
-                  v-for="list in lists"
-                  :key="list.id"
-                  :id="list.id">
+                v-model="lists"
+                handle
+                group="regular"
+                :animation="300"
+                @start="isDragging = true"
+                @end="isDragging = false"
+                @move="handleListMove"
+                @update="handleListReorder"
+              >
+                <template #default="{ item: list, isDragover }">
                   <Link
-                    v-for="list in lists"
                     :key="list.id"
                     :href="route('lists.show', list.id)"
-                    class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors hover:bg-accent hover:text-accent-foreground">
-                    <span>{{ list.name }}</span>
+                    :class="[
+                    'flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors hover:bg-accent group',
+                    { 'bg-accent text-accent-foreground': route().params.list == list.id },
+                    { 'cursor-grabbing': isDragging },
+                    { 'bg-accent/50': isDragover }
+                  ]">
+                    <div class="flex items-center gap-2">
+                      <GripVertical
+                        class="handle"
+                        :class="[
+                        'w-4 h-4 text-muted-foreground/50',
+                        isDragging ? 'cursor-grabbing' : 'cursor-move'
+                      ]"
+                      />
+                      <span>{{ list.name }}</span>
+                    </div>
 
                     <div class="flex items-center gap-2">
-                      <!--span class="text-xs text-muted-foreground">
-                        {{ list.count }}
-                      </span-->
+                    <span
+                      v-if="list.tasks_count"
+                      class="text-xs text-muted-foreground">
+                      {{ list.tasks_count }}
+                    </span>
 
-                      <span class="text-xs text-muted-foreground">
-                    {{ list.tasks_count }}
-                  </span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            class="h-6 w-6 opacity-0 group-hover:opacity-100">
+                            <Settings class="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
 
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        class="h-6 w-6 opacity-0 group-hover:opacity-100">
-                        <Settings class="h-4 w-4" />
-                      </Button>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem @click="editList(list)">
+                            Edit
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem @click="toggleFavorite(list)">
+                            {{ list.is_favorite ? 'Remove from favorites' : 'Add to favorites' }}
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+
+                          <DropdownMenuItem
+                            class="text-destructive focus:text-destructive"
+                            @click="deleteList(list)">
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </Link>
-                </SortableItem>
+                </template>
               </SortableList>
             </div>
-          </div>
+          </section>
 
           <Separator />
 
@@ -224,7 +304,7 @@ const handleListReorder = (reorderedLists) => {
                 <!-- ... -->
                 <ModalLink
                   as="Button"
-                  :href="route('labels.create')"
+                  :href="route('tags.create')"
                   variant="ghost" size="icon" class="h-6 w-6">
                   <Plus class="w-4 h-4" />
                 </ModalLink>
@@ -295,6 +375,7 @@ const handleListReorder = (reorderedLists) => {
                   <AvatarFallback>{{ user.name[0] }}</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="end" class="w-56">
                 <DropdownMenuLabel>
                   <div class="flex flex-col space-y-1">
@@ -302,16 +383,21 @@ const handleListReorder = (reorderedLists) => {
                     <p class="text-xs leading-none text-muted-foreground">{{ user.email }}</p>
                   </div>
                 </DropdownMenuLabel>
+
                 <DropdownMenuSeparator />
+
                 <DropdownMenuItem>
                   <User class="w-4 h-4 mr-2" />
                   Profile
                 </DropdownMenuItem>
+
                 <DropdownMenuItem>
                   <Settings class="w-4 h-4 mr-2" />
                   Settings
                 </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
+
                 <DropdownMenuItem>
                   <LogOut class="w-4 h-4 mr-2" />
                   Log out
@@ -329,9 +415,3 @@ const handleListReorder = (reorderedLists) => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-</style>

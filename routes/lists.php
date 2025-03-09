@@ -3,43 +3,39 @@
 use App\Http\Controllers\TaskListController;
 use App\Models\TaskList;
 use Illuminate\Support\Facades\Route;
-use Spatie\Tags\Tag;
 
 Route::middleware(['auth'])->group(function () {
-  // Modal routes
-  Route::get('lists/create', function () {
-    return inertia('lists/Create');
-  })->name('lists.create');
 
-  Route::get('lists/{list}/edit', function (TaskList $list) {
-    return inertia('lists/Edit', [
-      'list' => $list
-    ]);
-  })->name('lists.edit');
+  Route::prefix('lists')->name('lists.')->group(function () {
 
-  Route::get('lists/s/{list}', function (TaskList $list) {
-    return inertia('lists/Show', [
-      'list' => $list
-    ]);
-  })->name('lists.show');
+    // Modal routes
+    Route::get(
+      'c/new-list',
+      [TaskListController::class, 'create']
+    )->name('create');
 
-  Route::get('labels/create', function () {
-    return inertia('labels/Create');
-  })->name('labels.create');
+    Route::get(
+      'e/{list}',
+      [TaskListController::class, 'edit'],
+    )->name('edit');
 
-  Route::get('labels/{label}/edit', function (Tag $label) {
-    return inertia('labels/Edit', [
-      'label' => $label
-    ]);
-  })->name('labels.edit');
+    Route::get('s/{list}', function (TaskList $list) {
+      return Inertia('lists/Show', [
+        'list' => $list
+      ]);
+    })->name('show');
 
-  Route::get('labels/s/{label}', function (Tag $label) {
-    return inertia('labels/Show', [
-      'label' => $label
-    ]);
-  })->name('labels.show');
+    // List routes
+    Route::post(
+      'r/reorder',
+      [TaskListController::class, 'reorder']
+    )->name('reorder');
 
-  // List routes
-  Route::post('lists/reorder', [TaskListController::class, 'reorder'])->name('lists.reorder');
-  Route::delete('lists/bulk', [TaskListController::class, 'bulkDelete'])->name('lists.bulk-delete');
+    Route::delete(
+      'b/bulk',
+      [TaskListController::class, 'bulkDelete']
+    )->name('bulk-delete');
+
+  });
+
 });

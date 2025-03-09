@@ -26,6 +26,11 @@ class TagController extends Controller
     ]);
   }
 
+  public function create()
+  {
+    return Inertia::render('tags/Create');
+  }
+
   public function store(Request $request)
   {
     $validated = $request->validate([

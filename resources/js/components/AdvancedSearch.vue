@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useSearchStore } from '@/stores/useSearchStore'
 import {
   Dialog,
@@ -14,19 +13,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DateRangePicker } from '@/components/ui/date-range-picker'
-import { MultiSelect } from '@/components/ui/multi-select'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import DateRangePicker from '@/components/DateRangePicker.vue'
+import MultiSelect from '@/components/MultiSelect.vue'
+import { computed, toRef } from 'vue'
+import type { PropType } from 'vue'
 
-const props = defineProps<{
-  open: boolean
+interface DateRange {
+  start: Date | null
+  end: Date | null
+}
+
+// Define proper prop types
+const props = defineProps({
+  open: {
+    type: Boolean,
+    required: true
+  },
+  modelValue: {
+    type: Object as PropType<Record<string, any>>,
+    default: () => ({})
+  }
+})
+
+const emit = defineEmits<{
+  'update:open': [value: boolean]
+  'update:modelValue': [value: Record<string, any>]
+  'search': [filters: Record<string, any>]
 }>()
-
-const emit = defineEmits(['update:open', 'search'])
 
 const searchStore = useSearchStore()
 const { filters } = searchStore
+
+// Convert open prop to ref for v-model binding
+const isOpen = toRef(props, 'open')
 
 const typeOptions = [
   { value: 'all', label: 'All' },
@@ -65,10 +85,26 @@ const clearFilters = () => {
   filters.list = null
   filters.tags = []
 }
+
+const dateRange = computed<DateRange>({
+  get: () => ({
+    start: filters.date.from,
+    end: filters.date.to
+  }),
+  set: (value: DateRange) => {
+    if (value) {
+      filters.date.from = value.start
+      filters.date.to = value.end
+    } else {
+      filters.date.from = null
+      filters.date.to = null
+    }
+  }
+})
 </script>
 
 <template>
-  <Dialog :open="open" @update:open="$emit('update:open', $event)">
+  <Dialog :open="isOpen" @update:open="$emit('update:open', $event)">
     <DialogContent class="sm:max-w-[600px]">
       <DialogHeader>
         <DialogTitle>Advanced Search</DialogTitle>
@@ -99,8 +135,8 @@ const clearFilters = () => {
           <div class="space-y-2">
             <label class="text-sm font-medium">Date Range</label>
             <DateRangePicker
-              v-model:from="filters.date.from"
-              v-model:to="filters.date.to"
+              v-model="dateRange"
+              placeholder="Select date range"
             />
           </div>
         </div>
@@ -145,6 +181,7 @@ const clearFilters = () => {
         >
           Clear Filters
         </Button>
+
         <div class="flex gap-2">
           <Button
             variant="outline"
@@ -152,6 +189,7 @@ const clearFilters = () => {
           >
             Cancel
           </Button>
+
           <Button @click="handleSearch">
             Search
           </Button>

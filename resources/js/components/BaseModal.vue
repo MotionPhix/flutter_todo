@@ -7,9 +7,9 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { type Component, ref } from 'vue';
+import { ref } from 'vue';
 
-const modalRef = ref()
+const baseModalRef = ref()
 
 withDefaults(
   defineProps<{
@@ -20,17 +20,15 @@ withDefaults(
     padding?: string
     title?: string
     description?: string
-    icon?: Component
   }>(), {
     maxWidth: 'md',
     placement: 'center',
     manualClose: true,
-    slideOver: false,
   }
 )
 
 function close() {
-  modalRef.value.close()
+  baseModalRef.value.close()
 }
 
 defineExpose({
@@ -40,26 +38,29 @@ defineExpose({
 
 <template>
   <Modal
-    ref="modalRef"
+    ref="baseModalRef"
     :max-width="maxWidth"
     :position="placement"
     :paddingClasses="padding"
     :close-explicitly="manualClose"
     :close-button="hasCloseButton"
-    panel-classes="dark:text-muted-foreground max-h-[80svh] overflow-y-auto scrollbar-none scroll-smooth"
-    :slideover="slideover">
+    panel-classes="dark:text-muted-foreground max-h-[80svh] overflow-y-auto scrollbar-none scroll-smooth">
     <Card class="border-0 shadow-none">
+      
       <CardHeader v-if="title">
+
         <CardTitle>{{ title }}</CardTitle>
 
         <CardDescription v-if="description">
           {{ description }}
         </CardDescription>
+
       </CardHeader>
 
       <CardContent>
         <slot />
       </CardContent>
+
     </Card>
   </Modal>
 </template>

@@ -6,10 +6,23 @@ use App\Models\TaskList;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class TaskListController extends Controller
 {
   use AuthorizesRequests;
+
+  public function create()
+  {
+    return Inertia::render('lists/Create');
+  }
+
+  public function edit(TaskList $list)
+  {
+    return Inertia('lists/Edit', [
+      'list' => $list
+    ]);
+  }
 
   public function store(Request $request)
   {
